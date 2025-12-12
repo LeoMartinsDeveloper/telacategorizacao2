@@ -64,6 +64,12 @@ export function useCockpitData(): UseCockpitDataReturn {
     try {
       const data = await fetchQueue();
       setQueue(data);
+      // Auto-select first item
+      if (data.length > 0) {
+        setSelectedItem(data[0]);
+        const suggestions = await fetchSuggestions(data[0].id);
+        setSuggestions(suggestions);
+      }
     } catch (error) {
       setQueueError('Erro ao carregar a fila. Tente novamente.');
       console.error('Failed to fetch queue:', error);
