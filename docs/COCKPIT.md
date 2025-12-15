@@ -147,19 +147,37 @@ Quando em modo lote, o Editor exibe:
 
 ### Fluxo de Trabalho em Lote
 
+#### Opção 1: Via Editor (Coluna 2)
+
 ```
 1. Marcar checkboxes dos itens similares
-        ↓
+         ↓
 2. Editor muda para "Modo Lote"
-        ↓
+         ↓
 3. Selecionar categoria comum
-        ↓
+         ↓
 4. Selecionar subcategoria comum
-        ↓
+         ↓
 5. Clicar em "Salvar X itens"
-        ↓
+         ↓
 6. Itens removidos da fila (transição otimista)
 ```
+
+#### Opção 2: Via Sugestões (Coluna 3) - Recomendado
+
+```
+1. Marcar checkboxes dos itens similares
+         ↓
+2. Coluna de Sugestões exibe botões "Aplicar em X itens"
+         ↓
+3. Clicar no botão da sugestão desejada
+         ↓
+4. Categoria/Subcategoria aplicadas automaticamente a todos
+         ↓
+5. Itens removidos da fila (transição otimista)
+```
+
+> 💡 **Dica:** A Opção 2 é mais rápida pois aplica diretamente a classificação da sugestão sem necessidade de seleção manual.
 
 ### Tipos TypeScript para Lote
 

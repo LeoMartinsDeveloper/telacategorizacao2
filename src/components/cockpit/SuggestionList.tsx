@@ -1,22 +1,35 @@
 import { Suggestion } from '@/types/cockpit';
 import { cn } from '@/lib/utils';
-import { Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { Sparkles, ArrowRight, Loader2, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SuggestionListProps {
   suggestions: Suggestion[];
   selectedId: string | null;
   onSelect: (suggestion: Suggestion) => void;
+  onBatchSave?: (categoryId: string, subcategoryId: string) => void;
   isLoading: boolean;
   hasItem: boolean;
+  isBatchMode?: boolean;
+  batchCount?: number;
 }
 
 export function SuggestionList({ 
   suggestions, 
   selectedId, 
-  onSelect, 
+  onSelect,
+  onBatchSave,
   isLoading,
-  hasItem 
+  hasItem,
+  isBatchMode = false,
+  batchCount = 0
 }: SuggestionListProps) {
+
+  const handleBatchApply = (suggestion: Suggestion, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onBatchSave?.(suggestion.category_id, suggestion.subcategory_id);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b border-border">
@@ -25,12 +38,15 @@ export function SuggestionList({
           <h2 className="text-sm font-semibold text-foreground">Sugestões da IA</h2>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Clique para aplicar
+          {isBatchMode 
+            ? `Clique "Aplicar" para classificar ${batchCount} itens`
+            : 'Clique para aplicar'
+          }
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin p-2">
-        {!hasItem ? (
+        {!hasItem && !isBatchMode ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <p className="text-sm text-muted-foreground">
               Selecione um item para ver sugestões
@@ -52,13 +68,13 @@ export function SuggestionList({
         ) : (
           <div className="space-y-2">
             {suggestions.map((suggestion, index) => (
-              <button
+              <div
                 key={suggestion.id}
-                onClick={() => onSelect(suggestion)}
+                onClick={() => !isBatchMode && onSelect(suggestion)}
                 className={cn(
                   "w-full text-left p-3 rounded-lg transition-all duration-200",
-                  "hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring/50",
                   "animate-slide-in-right group",
+                  !isBatchMode && "cursor-pointer hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring/50",
                   selectedId === suggestion.id
                     ? "bg-primary/10 border border-primary/30 shadow-sm"
                     : "bg-card border border-transparent hover:border-border"
@@ -91,14 +107,25 @@ export function SuggestionList({
                   </span>
                 </div>
 
-                <div className={cn(
-                  "mt-2 flex items-center gap-1 text-xs text-primary opacity-0 transition-opacity",
-                  "group-hover:opacity-100"
-                )}>
-                  <span>Clique para aplicar</span>
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </button>
+                {isBatchMode ? (
+                  <Button
+                    size="sm"
+                    className="w-full mt-3 gap-2"
+                    onClick={(e) => handleBatchApply(suggestion, e)}
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Aplicar em {batchCount} itens
+                  </Button>
+                ) : (
+                  <div className={cn(
+                    "mt-2 flex items-center gap-1 text-xs text-primary opacity-0 transition-opacity",
+                    "group-hover:opacity-100"
+                  )}>
+                    <span>Clique para aplicar</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

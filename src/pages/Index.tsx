@@ -49,6 +49,24 @@ const Index = () => {
     });
   }, [toast]);
 
+  const handleSuggestionBatchSave = useCallback(async (categoryId: string, subcategoryId: string) => {
+    const result = await saveBatch({ categoryId, subcategoryId });
+
+    if (result.success) {
+      setSelectedSuggestion(null);
+      toast({
+        title: "Lote salvo com sucesso",
+        description: `${result.count} itens foram classificados via sugestão.`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar lote",
+        description: result.error,
+      });
+    }
+  }, [saveBatch, toast]);
+
   const handleSave = useCallback(async (data: { name: string; categoryId: string; subcategoryId: string }) => {
     const result = await saveItem(data);
 
@@ -183,8 +201,11 @@ const Index = () => {
             suggestions={suggestions}
             selectedId={selectedSuggestion?.id || null}
             onSelect={handleSelectSuggestion}
+            onBatchSave={handleSuggestionBatchSave}
             isLoading={isLoadingSuggestions}
             hasItem={!!selectedItem}
+            isBatchMode={isBatchMode}
+            batchCount={selectedBatchIds.length}
           />
         </aside>
       </main>
