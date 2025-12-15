@@ -6,6 +6,7 @@ import {
   fetchCategories,
   fetchSubcategories,
   processItem,
+  processBatch,
   DuplicityError,
 } from '@/services/cockpitApi';
 
@@ -21,6 +22,13 @@ interface UseCockpitDataReturn {
   selectItem: (item: QueueItem) => void;
   clearSelection: () => void;
 
+  // Batch selection state
+  selectedBatchIds: string[];
+  toggleBatchSelection: (id: string) => void;
+  clearBatchSelection: () => void;
+  selectAllBatch: () => void;
+  isBatchMode: boolean;
+
   // Suggestions state
   suggestions: Suggestion[];
   isLoadingSuggestions: boolean;
@@ -32,6 +40,7 @@ interface UseCockpitDataReturn {
 
   // Actions
   saveItem: (data: { name: string; categoryId: string; subcategoryId: string }) => Promise<{ success: boolean; error?: string }>;
+  saveBatch: (data: { categoryId: string; subcategoryId: string }) => Promise<{ success: boolean; error?: string; count?: number }>;
   skipItem: () => void;
   isSaving: boolean;
 }
@@ -45,6 +54,9 @@ export function useCockpitData(): UseCockpitDataReturn {
   // Selected item state
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
 
+  // Batch selection state
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
+
   // Suggestions state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -56,6 +68,9 @@ export function useCockpitData(): UseCockpitDataReturn {
 
   // Action state
   const [isSaving, setIsSaving] = useState(false);
+
+  // Computed
+  const isBatchMode = selectedBatchIds.length > 0;
 
   // Fetch queue on mount
   const loadQueue = useCallback(async () => {
@@ -122,6 +137,24 @@ export function useCockpitData(): UseCockpitDataReturn {
     setSuggestions([]);
   }, []);
 
+  // Batch selection handlers
+  const toggleBatchSelection = useCallback((id: string) => {
+    setSelectedBatchIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(batchId => batchId !== id);
+      }
+      return [...prev, id];
+    });
+  }, []);
+
+  const clearBatchSelection = useCallback(() => {
+    setSelectedBatchIds([]);
+  }, []);
+
+  const selectAllBatch = useCallback(() => {
+    setSelectedBatchIds(queue.map(item => item.id));
+  }, [queue]);
+
   // Save item with optimistic update
   const saveItem = useCallback(async (data: { name: string; categoryId: string; subcategoryId: string }) => {
     if (!selectedItem) {
@@ -165,6 +198,52 @@ export function useCockpitData(): UseCockpitDataReturn {
     }
   }, [selectedItem, queue, selectItem, clearSelection]);
 
+  // Save batch with optimistic update
+  const saveBatch = useCallback(async (data: { categoryId: string; subcategoryId: string }) => {
+    if (selectedBatchIds.length === 0) {
+      return { success: false, error: 'Nenhum item selecionado para lote.' };
+    }
+
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        items: selectedBatchIds.map(id => ({
+          id,
+          category_id: data.categoryId,
+          subcategory_id: data.subcategoryId,
+        })),
+      };
+
+      await processBatch(payload);
+
+      const count = selectedBatchIds.length;
+
+      // Optimistic update - remove all batch items from queue
+      const newQueue = queue.filter(item => !selectedBatchIds.includes(item.id));
+      setQueue(newQueue);
+
+      // Clear batch selection
+      setSelectedBatchIds([]);
+
+      // Update selected item
+      if (selectedItem && selectedBatchIds.includes(selectedItem.id)) {
+        const nextItem = newQueue[0] || null;
+        if (nextItem) {
+          selectItem(nextItem);
+        } else {
+          clearSelection();
+        }
+      }
+
+      return { success: true, count };
+    } catch (error) {
+      return { success: false, error: 'Erro ao salvar lote. Tente novamente.' };
+    } finally {
+      setIsSaving(false);
+    }
+  }, [selectedBatchIds, queue, selectedItem, selectItem, clearSelection]);
+
   // Skip to next item without saving
   const skipItem = useCallback(() => {
     if (!selectedItem || queue.length === 0) return;
@@ -185,12 +264,18 @@ export function useCockpitData(): UseCockpitDataReturn {
     selectedItem,
     selectItem,
     clearSelection,
+    selectedBatchIds,
+    toggleBatchSelection,
+    clearBatchSelection,
+    selectAllBatch,
+    isBatchMode,
     suggestions,
     isLoadingSuggestions,
     categories,
     subcategories,
     isLoadingCategories,
     saveItem,
+    saveBatch,
     skipItem,
     isSaving,
   };

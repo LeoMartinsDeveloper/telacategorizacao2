@@ -37,3 +37,11 @@ export interface ProcessPayload {
   category_id: string;
   subcategory_id: string;
 }
+
+export interface BatchProcessPayload {
+  items: {
+    id: string;
+    category_id: string;
+    subcategory_id: string;
+  }[];
+}

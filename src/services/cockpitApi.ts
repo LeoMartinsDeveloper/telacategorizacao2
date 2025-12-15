@@ -1,4 +1,4 @@
-import { QueueItem, Suggestion, Category, Subcategory, ProcessPayload } from '@/types/cockpit';
+import { QueueItem, Suggestion, Category, Subcategory, ProcessPayload, BatchProcessPayload } from '@/types/cockpit';
 
 // Base API configuration - update this when integrating with real backend
 const API_BASE_URL = '/api';
@@ -191,6 +191,26 @@ export async function processItem(payload: ProcessPayload): Promise<void> {
   
   await delay(400);
   console.log('Item processed:', payload);
+}
+
+/**
+ * Processes multiple items in batch
+ * Endpoint: POST /process-batch
+ */
+export async function processBatch(payload: BatchProcessPayload): Promise<void> {
+  // TODO: Replace with actual API call
+  // const response = await fetch(`${API_BASE_URL}/process-batch`, {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(payload),
+  // });
+  // 
+  // if (!response.ok) {
+  //   throw new Error('Failed to process batch');
+  // }
+  
+  await delay(600);
+  console.log('Batch processed:', payload);
 }
 
 /**

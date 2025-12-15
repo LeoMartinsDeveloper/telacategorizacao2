@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Save, SkipForward, Brain, FileText, Tag } from 'lucide-react';
+import { Save, SkipForward, Brain, FileText, Tag, Layers } from 'lucide-react';
 
 interface ItemEditorProps {
   item: QueueItem | null;
@@ -19,8 +19,11 @@ interface ItemEditorProps {
   subcategories: Subcategory[];
   selectedSuggestion: Suggestion | null;
   onSave: (data: { name: string; categoryId: string; subcategoryId: string }) => void;
+  onBatchSave: (data: { categoryId: string; subcategoryId: string }) => void;
   onSkip: () => void;
   isSaving: boolean;
+  isBatchMode: boolean;
+  batchCount: number;
 }
 
 export function ItemEditor({
@@ -29,20 +32,23 @@ export function ItemEditor({
   subcategories,
   selectedSuggestion,
   onSave,
+  onBatchSave,
   onSkip,
   isSaving,
+  isBatchMode,
+  batchCount,
 }: ItemEditorProps) {
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [subcategoryId, setSubcategoryId] = useState('');
 
   useEffect(() => {
-    if (item) {
+    if (item && !isBatchMode) {
       setName(item.normalized_name);
       setCategoryId(item.category_id || '');
       setSubcategoryId(item.subcategory_id || '');
     }
-  }, [item]);
+  }, [item, isBatchMode]);
 
   useEffect(() => {
     if (selectedSuggestion) {
@@ -50,6 +56,15 @@ export function ItemEditor({
       setSubcategoryId(selectedSuggestion.subcategory_id);
     }
   }, [selectedSuggestion]);
+
+  // Clear form when entering batch mode
+  useEffect(() => {
+    if (isBatchMode) {
+      setName('');
+      setCategoryId('');
+      setSubcategoryId('');
+    }
+  }, [isBatchMode]);
 
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.category_id === categoryId
@@ -61,11 +76,106 @@ export function ItemEditor({
   };
 
   const handleSubmit = () => {
-    onSave({ name, categoryId, subcategoryId });
+    if (isBatchMode) {
+      onBatchSave({ categoryId, subcategoryId });
+    } else {
+      onSave({ name, categoryId, subcategoryId });
+    }
   };
 
-  const canSave = name.trim() && categoryId && subcategoryId;
+  const canSave = isBatchMode 
+    ? categoryId && subcategoryId 
+    : name.trim() && categoryId && subcategoryId;
 
+  // Batch mode UI
+  if (isBatchMode) {
+    return (
+      <div className="flex flex-col h-full animate-fade-in">
+        <div className="px-6 py-4 border-b border-border bg-primary/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Layers className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Modo Lote</h2>
+              <p className="text-sm text-muted-foreground">
+                {batchCount} itens selecionados para classificação em massa
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto scrollbar-thin p-6 space-y-6">
+          {/* Batch info */}
+          <div className="p-4 rounded-lg bg-muted/50 border border-border">
+            <p className="text-sm text-muted-foreground">
+              A categoria e subcategoria selecionadas serão aplicadas a todos os {batchCount} itens do lote.
+              <br />
+              <span className="text-xs text-muted-foreground/70 mt-1 block">
+                Nota: Os nomes dos itens serão mantidos inalterados.
+              </span>
+            </p>
+          </div>
+
+          {/* Category Select */}
+          <div className="space-y-2">
+            <Label htmlFor="category" className="text-sm font-medium">
+              Categoria (aplicada ao lote)
+            </Label>
+            <Select value={categoryId} onValueChange={handleCategoryChange}>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Subcategory Select */}
+          <div className="space-y-2">
+            <Label htmlFor="subcategory" className="text-sm font-medium">
+              Subcategoria (aplicada ao lote)
+            </Label>
+            <Select 
+              value={subcategoryId} 
+              onValueChange={setSubcategoryId}
+              disabled={!categoryId}
+            >
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder={categoryId ? "Selecione uma subcategoria" : "Selecione uma categoria primeiro"} />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredSubcategories.map((sub) => (
+                  <SelectItem key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="px-6 py-4 border-t border-border bg-card">
+          <Button
+            onClick={handleSubmit}
+            className="w-full"
+            disabled={!canSave || isSaving}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? 'Salvando...' : `Salvar ${batchCount} itens`}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No item selected
   if (!item) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -82,6 +192,7 @@ export function ItemEditor({
     );
   }
 
+  // Single item mode
   return (
     <div className="flex flex-col h-full animate-fade-in">
       <div className="px-6 py-4 border-b border-border">
