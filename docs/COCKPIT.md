@@ -5,9 +5,10 @@
 1. [Visão Geral](#visão-geral)
 2. [Interface do Usuário](#interface-do-usuário)
 3. [Guia de Uso](#guia-de-uso)
-4. [Integração de API](#integração-de-api)
-5. [Tratamento de Erros](#tratamento-de-erros)
-6. [Regras de Negócio](#regras-de-negócio)
+4. [Processamento em Lote](#processamento-em-lote)
+5. [Integração de API](#integração-de-api)
+6. [Tratamento de Erros](#tratamento-de-erros)
+7. [Regras de Negócio](#regras-de-negócio)
 
 ---
 
@@ -118,6 +119,60 @@ Exibe itens similares encontrados pela IA.
 #### Atualizar Fila
 - Recarrega a lista de itens pendentes
 - Útil quando outros operadores estão trabalhando simultaneamente
+
+---
+
+## Processamento em Lote
+
+O Cockpit suporta **processamento em lote (batch)**, permitindo classificar múltiplos itens com a mesma categoria/subcategoria de uma só vez.
+
+### Ativando o Modo Lote
+
+1. Na coluna da **Fila**, marque os checkboxes dos itens que deseja processar
+2. Use "Selecionar todos" para marcar todos os itens
+3. O **Editor** mudará automaticamente para o modo lote
+
+### Interface do Modo Lote
+
+Quando em modo lote, o Editor exibe:
+
+| Elemento | Descrição |
+|----------|-----------|
+| **Contador** | Quantidade de itens selecionados |
+| **Categoria** | Dropdown para selecionar categoria (aplicada a todos) |
+| **Subcategoria** | Dropdown para selecionar subcategoria (aplicada a todos) |
+| **Botão Salvar** | Processa todos os itens selecionados |
+
+> ⚠️ **Importante:** No modo lote, os **nomes dos itens são mantidos inalterados**. Apenas categoria e subcategoria são aplicadas.
+
+### Fluxo de Trabalho em Lote
+
+```
+1. Marcar checkboxes dos itens similares
+        ↓
+2. Editor muda para "Modo Lote"
+        ↓
+3. Selecionar categoria comum
+        ↓
+4. Selecionar subcategoria comum
+        ↓
+5. Clicar em "Salvar X itens"
+        ↓
+6. Itens removidos da fila (transição otimista)
+```
+
+### Tipos TypeScript para Lote
+
+```typescript
+// Payload para processamento em lote
+interface BatchProcessPayload {
+  items: {
+    id: string;           // ID original do item - IMUTÁVEL
+    category_id: string;
+    subcategory_id: string;
+  }[];
+}
+```
 
 ---
 
@@ -318,7 +373,48 @@ export async function processItem(payload: ProcessPayload): Promise<void> {
 
 ---
 
-### Exemplo Completo de Integração
+#### 6. POST /process-batch
+
+Processa múltiplos itens em lote.
+
+**Request Body:**
+```typescript
+interface BatchProcessPayload {
+  items: {
+    id: string;           // UUID original - NUNCA GERAR NOVO
+    category_id: string;
+    subcategory_id: string;
+  }[];
+}
+```
+
+**Responses:**
+
+| Status | Descrição |
+|--------|-----------|
+| 200 OK | Lote processado com sucesso |
+| 400 Bad Request | Dados inválidos |
+| 500 Internal Error | Erro no processamento do lote |
+
+**Exemplo de implementação:**
+```typescript
+export async function processBatch(payload: BatchProcessPayload): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/process-batch`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${getAuthToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to process batch');
+  }
+}
+```
+
+---
 
 Substitua o conteúdo de `src/services/cockpitApi.ts`:
 

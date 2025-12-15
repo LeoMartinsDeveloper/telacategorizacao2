@@ -17,11 +17,17 @@ const Index = () => {
     refetchQueue,
     selectedItem,
     selectItem,
+    selectedBatchIds,
+    toggleBatchSelection,
+    clearBatchSelection,
+    selectAllBatch,
+    isBatchMode,
     suggestions,
     isLoadingSuggestions,
     categories,
     subcategories,
     saveItem,
+    saveBatch,
     skipItem,
     isSaving,
   } = useCockpitData();
@@ -60,6 +66,24 @@ const Index = () => {
       });
     }
   }, [saveItem, toast]);
+
+  const handleBatchSave = useCallback(async (data: { categoryId: string; subcategoryId: string }) => {
+    const result = await saveBatch(data);
+
+    if (result.success) {
+      setSelectedSuggestion(null);
+      toast({
+        title: "Lote salvo com sucesso",
+        description: `${result.count} itens foram classificados e movidos para o Baseline.`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar lote",
+        description: result.error,
+      });
+    }
+  }, [saveBatch, toast]);
 
   const handleSkip = useCallback(() => {
     skipItem();
@@ -128,7 +152,11 @@ const Index = () => {
             <QueueList
               items={queue}
               selectedId={selectedItem?.id || null}
+              selectedBatchIds={selectedBatchIds}
               onSelect={handleSelectItem}
+              onToggleBatch={toggleBatchSelection}
+              onSelectAll={selectAllBatch}
+              onClearBatch={clearBatchSelection}
             />
           )}
         </aside>
@@ -141,8 +169,11 @@ const Index = () => {
             subcategories={subcategories}
             selectedSuggestion={selectedSuggestion}
             onSave={handleSave}
+            onBatchSave={handleBatchSave}
             onSkip={handleSkip}
             isSaving={isSaving}
+            isBatchMode={isBatchMode}
+            batchCount={selectedBatchIds.length}
           />
         </section>
 
