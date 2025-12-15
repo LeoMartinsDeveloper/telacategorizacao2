@@ -1,6 +1,6 @@
 ⚡ Introdução Rápida: O Módulo de Classificação
 
-O Módulo de Classificação Manual Assistida (Cockpit HITL) é a interface de alta produtividade para refinar a precisão do nosso sistema de Inteligência Artificial.Construído sobre o conceito Human-in-the-Loop (HITL), este Cockpit foca em apresentar os itens onde a IA teve baixa confiança, permitindo que o operador: Valide: Confirme ou corrija a classificação sugerida. Edite: Altere o nome do produto (normalized_name). Decida: Use sugestões de similaridade da IA para agilizar o processo.
+O Módulo de Classificação Manual Assistida (Cockpit HITL) é a interface de alta produtividade para refinar a precisão do nosso sistema de Inteligência Artificial.Construído sobre o conceito Human-in-the-Loop (HITL), este Cockpit foca em apresentar os itens onde a IA teve baixa confiança, permitindo que o operador: Confirme ou corrija a classificação sugerida, altere o nome do produto (normalized_name) e use sugestões de similaridade da IA para agilizar o processo.
 
 🛠️ Tecnologias Usadas
 
