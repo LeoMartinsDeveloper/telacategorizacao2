@@ -1,10 +1,10 @@
 import { QueueItem, Suggestion, Category, Subcategory, ProcessPayload } from '@/types/cockpit';
 
-// Base API configuration - update this when integrating with real backend
+// config de api base
 const API_BASE_URL = '/api';
 
 /**
- * Fetches pending items from the validation queue
+ * busca os itens pendentes da fila de validação
  * Endpoint: GET /queue
  */
 export async function fetchQueue(): Promise<QueueItem[]> {
