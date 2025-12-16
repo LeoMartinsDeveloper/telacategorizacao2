@@ -1,4 +1,4 @@
-import { QueueItem, Suggestion, Category, Subcategory, ProcessPayload, BatchProcessPayload } from '@/types/cockpit';
+import { QueueItem, Category, Subcategory, ProcessPayload, BatchProcessPayload } from '@/types/cockpit';
 
 // Base API configuration - update this when integrating with real backend
 const API_BASE_URL = '/api';
@@ -83,28 +83,6 @@ const mockQueue: QueueItem[] = [
   },
 ];
 
-const mockSuggestions: Record<string, Suggestion[]> = {
-  'item-1': [
-    { id: 'sug-1', name: 'Arroz Branco Tipo 1 Camil 5kg', category_id: 'cat-1', category_name: 'Alimentos', subcategory_id: 'sub-1', subcategory_name: 'Grãos e Cereais', similarity: 0.95 },
-    { id: 'sug-2', name: 'Arroz Branco Tipo 1 Tio João 5kg', category_id: 'cat-1', category_name: 'Alimentos', subcategory_id: 'sub-1', subcategory_name: 'Grãos e Cereais', similarity: 0.93 },
-  ],
-  'item-2': [
-    { id: 'sug-3', name: 'Coca-Cola 2L', category_id: 'cat-2', category_name: 'Bebidas', subcategory_id: 'sub-4', subcategory_name: 'Refrigerantes', similarity: 0.88 },
-    { id: 'sug-4', name: 'Pepsi 2L', category_id: 'cat-2', category_name: 'Bebidas', subcategory_id: 'sub-4', subcategory_name: 'Refrigerantes', similarity: 0.85 },
-  ],
-  'item-3': [
-    { id: 'sug-5', name: 'Detergente Ypê Neutro 500ml', category_id: 'cat-3', category_name: 'Limpeza', subcategory_id: 'sub-7', subcategory_name: 'Detergentes', similarity: 0.72 },
-    { id: 'sug-6', name: 'Detergente Limpol Neutro 500ml', category_id: 'cat-3', category_name: 'Limpeza', subcategory_id: 'sub-7', subcategory_name: 'Detergentes', similarity: 0.70 },
-  ],
-  'item-4': [
-    { id: 'sug-7', name: 'Leite Integral Parmalat 1L', category_id: 'cat-1', category_name: 'Alimentos', subcategory_id: 'sub-2', subcategory_name: 'Laticínios', similarity: 0.91 },
-    { id: 'sug-8', name: 'Leite Integral Italac 1L', category_id: 'cat-1', category_name: 'Alimentos', subcategory_id: 'sub-2', subcategory_name: 'Laticínios', similarity: 0.89 },
-  ],
-  'item-5': [
-    { id: 'sug-9', name: 'Sabonete Líquido Protex 250ml', category_id: 'cat-4', category_name: 'Higiene Pessoal', subcategory_id: 'sub-9', subcategory_name: 'Sabonetes', similarity: 0.82 },
-  ],
-};
-
 /**
  * Fetches pending items from the validation queue
  * Endpoint: GET /queue
@@ -117,20 +95,6 @@ export async function fetchQueue(): Promise<QueueItem[]> {
   
   await delay(500);
   return mockQueue;
-}
-
-/**
- * Fetches similar item suggestions for a given item
- * Endpoint: GET /suggestions?item_id={id}
- */
-export async function fetchSuggestions(itemId: string): Promise<Suggestion[]> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`${API_BASE_URL}/suggestions?item_id=${itemId}`);
-  // if (!response.ok) throw new Error('Failed to fetch suggestions');
-  // return response.json();
-  
-  await delay(300);
-  return mockSuggestions[itemId] || [];
 }
 
 /**
