@@ -10,14 +10,12 @@ export interface QueueItem {
   subcategory_id?: string;
 }
 
-export interface Suggestion {
-  id: string;
-  name: string;
-  category_id: string;
-  category_name: string;
-  subcategory_id: string;
-  subcategory_name: string;
-  similarity: number;
+export interface StagingItem extends QueueItem {
+  staged_category_id: string;
+  staged_category_name: string;
+  staged_subcategory_id: string;
+  staged_subcategory_name: string;
+  staged_name: string;
 }
 
 export interface Category {
@@ -41,6 +39,7 @@ export interface ProcessPayload {
 export interface BatchProcessPayload {
   items: {
     id: string;
+    name: string;
     category_id: string;
     subcategory_id: string;
   }[];
