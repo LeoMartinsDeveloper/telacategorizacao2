@@ -14,6 +14,7 @@ interface UseCockpitDataReturn {
   isLoadingQueue: boolean;
   queueError: string | null;
   refetchQueue: () => Promise<void>;
+  
 
   // Selected item state
   selectedItem: QueueItem | null;
@@ -28,7 +29,7 @@ interface UseCockpitDataReturn {
 
   // Staging area state
   stagingArea: StagingItem[];
-  addToStaging: (data: { name: string; categoryId: string; subcategoryId: string }) => void;
+  addToStaging: (data: { name: string; categoryId: string; subcategoryId: string }, itemId?: string) => void; // linha alterada
   revertFromStaging: (item: StagingItem) => void;
   commitBatch: () => Promise<{ success: boolean; error?: string; count?: number }>;
   isCommitting: boolean;
@@ -130,33 +131,40 @@ export function useCockpitData(): UseCockpitDataReturn {
   }, [queue]);
 
   // Add item to staging (move from queue to staging)
-  const addToStaging = useCallback((data: { name: string; categoryId: string; subcategoryId: string }) => {
-    if (!selectedItem) return;
+  const addToStaging = useCallback((data: { name: string; categoryId: string; subcategoryId: string }, itemId?: string) => {
+    const itemToProcess = itemId 
+      ? queue.find(item => item.id === itemId) 
+      : selectedItem;
+
+    if (!itemToProcess) return;
 
     const category = categories.find(c => c.id === data.categoryId);
     const subcategory = subcategories.find(s => s.id === data.subcategoryId);
 
     const stagingItem: StagingItem = {
-      ...selectedItem,
-      staged_name: data.name,
+      ...itemToProcess,
+      staged_name: itemId ? itemToProcess.normalized_name : data.name,
       staged_category_id: data.categoryId,
       staged_category_name: category?.name || '',
       staged_subcategory_id: data.subcategoryId,
       staged_subcategory_name: subcategory?.name || '',
     };
 
-    // Add to staging
     setStagingArea(prev => [...prev, stagingItem]);
 
-    // Remove from queue (optimistic)
-    const currentIndex = queue.findIndex(item => item.id === selectedItem.id);
-    const newQueue = queue.filter(item => item.id !== selectedItem.id);
-    setQueue(newQueue);
-    setSelectedBatchIds((prev) => prev.filter((id) => id !== selectedItem.id));
+    setQueue(prevQueue => {
+      const newQueue = prevQueue.filter(item => item.id !== itemToProcess.id);
+      
+      if (!itemId || (selectedItem && itemToProcess.id === selectedItem.id)) {
+        const currentIndex = prevQueue.findIndex(item => item.id === itemToProcess.id);
+        const nextItem = newQueue[currentIndex] || newQueue[0] || null;
+        setSelectedItem(nextItem);
+      }
+      
+      return newQueue;
+    });
 
-    // Move to next item
-    const nextItem = newQueue[currentIndex] || newQueue[0] || null;
-    setSelectedItem(nextItem);
+    setSelectedBatchIds(prev => prev.filter(id => id !== itemToProcess.id));
   }, [selectedItem, queue, categories, subcategories]);
 
   // Revert item from staging back to queue

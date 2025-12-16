@@ -38,12 +38,24 @@ const Index = () => {
   }, [selectItem]);
 
   const handleSave = useCallback((data: { name: string; categoryId: string; subcategoryId: string }) => {
-    addToStaging(data);
-    toast({
-      title: "Item adicionado ao carrinho",
-      description: `"${data.name}" está pronto para envio.`,
-    });
-  }, [addToStaging, toast]);
+    if (selectedBatchIds.length > 0) {
+      selectedBatchIds.forEach(id => {
+        // Passamos o 'id' como segundo parâmetro para o hook saber qual item real processar
+        addToStaging(data, id);
+      });
+      clearBatchSelection();
+      toast({
+        title: "Lote adicionado ao carrinho",
+        description: `${selectedBatchIds.length} itens movidos com sucesso.`,
+      });
+    } else {
+      addToStaging(data);
+      toast({
+        title: "Item adicionado ao carrinho",
+        description: `"${data.name}" está pronto para envio.`,
+      });
+    }
+  }, [selectedBatchIds, addToStaging, clearBatchSelection, toast]);
 
   const handleRevert = useCallback((item: StagingItem) => {
     revertFromStaging(item);
