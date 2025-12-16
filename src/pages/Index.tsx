@@ -94,38 +94,45 @@ const Index = () => {
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Cpu className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-foreground">Cockpit de Validação</h1>
-            <p className="text-xs text-muted-foreground">Classificação Manual de Itens</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={refetchQueue}
-            disabled={isLoadingQueue}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoadingQueue ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-          
-          {queue.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
-              <AlertCircle className="h-3.5 w-3.5 text-confidence-medium" />
-              <span className="text-xs font-medium text-muted-foreground">
-                {queue.length} pendentes
-              </span>
-            </div>
-          )}
-        </div>
-      </header>
+  <div className="flex items-center gap-3 w-1/3">
+    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+      <Cpu className="h-4 w-4 text-primary-foreground" />
+    </div>
+    <div className="hidden sm:block text-left">
+      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] leading-none">
+        Cockpit
+      </p>
+    </div>
+  </div>
+
+  <div className="flex-1 flex justify-center items-center">
+    <h1 className="text-xl font-black tracking-tighter text-white font-mono italic flex items-center gap-0">
+      recria<span className="text-primary not-italic">.ia</span>
+    </h1>
+  </div>
+  
+  <div className="flex items-center justify-end gap-3 w-1/3">
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={refetchQueue}
+      disabled={isLoadingQueue}
+      className="gap-2"
+    >
+      <RefreshCw className={`h-4 w-4 ${isLoadingQueue ? 'animate-spin' : ''}`} />
+      Atualizar
+    </Button>
+    
+    {queue.length > 0 && (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
+        <AlertCircle className="h-3.5 w-3.5 text-confidence-medium" />
+        <span className="text-xs font-medium text-muted-foreground">
+          {queue.length} pendentes
+        </span>
+      </div>
+    )}
+  </div>
+</header>
 
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
