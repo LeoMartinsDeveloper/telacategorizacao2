@@ -17,6 +17,10 @@ const Index = () => {
     refetchQueue,
     selectedItem,
     selectItem,
+    selectedBatchIds,
+    toggleBatchSelection,
+    selectAllBatch,
+    clearBatchSelection,
     stagingArea,
     addToStaging,
     revertFromStaging,
@@ -129,14 +133,15 @@ const Index = () => {
               </Button>
             </div>
           ) : (
+            
             <QueueList
               items={queue}
               selectedId={selectedItem?.id || null}
-              selectedBatchIds={[]}
+              selectedBatchIds={selectedBatchIds}
               onSelect={handleSelectItem}
-              onToggleBatch={() => {}}
-              onSelectAll={() => {}}
-              onClearBatch={() => {}}
+              onToggleBatch={toggleBatchSelection}
+              onSelectAll={selectAllBatch}
+              onClearBatch={clearBatchSelection}
             />
           )}
         </aside>

@@ -20,6 +20,12 @@ interface UseCockpitDataReturn {
   selectItem: (item: QueueItem) => void;
   clearSelection: () => void;
 
+  // Batch selection state (Queue)
+  selectedBatchIds: string[];
+  toggleBatchSelection: (id: string) => void;
+  selectAllBatch: () => void;
+  clearBatchSelection: () => void;
+
   // Staging area state
   stagingArea: StagingItem[];
   addToStaging: (data: { name: string; categoryId: string; subcategoryId: string }) => void;
@@ -45,6 +51,9 @@ export function useCockpitData(): UseCockpitDataReturn {
   // Selected item state
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
 
+  // Batch selection state (Queue)
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
+
   // Staging area state
   const [stagingArea, setStagingArea] = useState<StagingItem[]>([]);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -61,6 +70,7 @@ export function useCockpitData(): UseCockpitDataReturn {
     try {
       const data = await fetchQueue();
       setQueue(data);
+      setSelectedBatchIds([]);
       // Auto-select first item
       if (data.length > 0) {
         setSelectedItem(data[0]);
@@ -105,6 +115,20 @@ export function useCockpitData(): UseCockpitDataReturn {
     setSelectedItem(null);
   }, []);
 
+  const toggleBatchSelection = useCallback((id: string) => {
+    setSelectedBatchIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }, []);
+
+  const clearBatchSelection = useCallback(() => {
+    setSelectedBatchIds([]);
+  }, []);
+
+  const selectAllBatch = useCallback(() => {
+    setSelectedBatchIds(queue.map((i) => i.id));
+  }, [queue]);
+
   // Add item to staging (move from queue to staging)
   const addToStaging = useCallback((data: { name: string; categoryId: string; subcategoryId: string }) => {
     if (!selectedItem) return;
@@ -128,6 +152,7 @@ export function useCockpitData(): UseCockpitDataReturn {
     const currentIndex = queue.findIndex(item => item.id === selectedItem.id);
     const newQueue = queue.filter(item => item.id !== selectedItem.id);
     setQueue(newQueue);
+    setSelectedBatchIds((prev) => prev.filter((id) => id !== selectedItem.id));
 
     // Move to next item
     const nextItem = newQueue[currentIndex] || newQueue[0] || null;
@@ -210,6 +235,10 @@ export function useCockpitData(): UseCockpitDataReturn {
     selectedItem,
     selectItem,
     clearSelection,
+    selectedBatchIds,
+    toggleBatchSelection,
+    selectAllBatch,
+    clearBatchSelection,
     stagingArea,
     addToStaging,
     revertFromStaging,
