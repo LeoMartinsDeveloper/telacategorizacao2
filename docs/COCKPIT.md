@@ -72,17 +72,17 @@ Lista todos os itens pendentes de validação.
 | **Botão Salvar** | Envia o item para processamento |
 | **Botão Pular** | Avança para o próximo item sem salvar |
 
-### Coluna 3: Sugestões (Direita)
+### Coluna 3: Carrinho / Staging (Direita)
 
-Exibe itens similares encontrados pela IA.
+Exibe os itens classificados que aguardam o envio definitivo para o banco de dados.
 
 | Elemento | Descrição |
 |----------|-----------|
-| **Nome da Sugestão** | Nome do item similar |
-| **% Similaridade** | Porcentagem de similaridade com o item atual |
-| **Categoria/Subcategoria** | Classificação do item sugerido |
+| **Lista de Staging** | Itens movidos após o clique em "Salvar" no Editor |
+| **Botão Reverter** | Devolve o item individual para a fila original (Coluna 1) |
+| **Botão Enviar Lote** | Realiza o commit final de todos os itens da lista para a API |
 
-**Interação:** Ao clicar em uma sugestão, a categoria e subcategoria são preenchidas automaticamente no editor.
+**Interação:** O operador pode revisar todos os itens processados antes de realizar a persistência definitiva. Caso um erro seja detectado, o item pode ser devolvido à fila sem prejuízo aos dados.
 
 ---
 
@@ -95,21 +95,17 @@ Exibe itens similares encontrados pela IA.
         ↓
 2. Revisar informações e raciocínio da IA
         ↓
-3. (Opcional) Clicar em sugestão para preencher categoria
+3. Editar nome se necessário
         ↓
-4. Editar nome se necessário
+4. Selecionar categoria e subcategoria
         ↓
-5. Selecionar categoria e subcategoria
-        ↓
-6. Clicar em "Salvar" ou "Pular"
+5. Clicar em "Adicionar ao carrinho" ou "Pular"
 ```
 
 ### Ações Disponíveis
 
-#### Salvar Item
-- Valida e envia o item para o Baseline
-- Remove o item da fila automaticamente
-- Carrega o próximo item
+#### Adicionar ao carrinho
+- Envia o item ao carrinho, para que ele seja enviado em lote pra base
 
 #### Pular Item
 - Avança para o próximo item
@@ -158,7 +154,7 @@ Quando em modo lote, o Editor exibe:
          ↓
 4. Selecionar subcategoria comum
          ↓
-5. Clicar em "Salvar X itens"
+5. Clicar em "Adicionar ao carrinho"
          ↓
 6. Itens removidos da fila (transição otimista)
 ```
