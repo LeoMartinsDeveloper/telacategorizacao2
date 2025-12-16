@@ -1,73 +1,13 @@
-# Welcome to your Lovable project
+⚡ Introdução Rápida: O Módulo de Classificação
 
-## Project info
+O Módulo de Classificação Manual Assistida (Cockpit HITL) é a interface de alta produtividade para refinar a precisão do nosso sistema de Inteligência Artificial.Construído sobre o conceito Human-in-the-Loop (HITL), este Cockpit foca em apresentar os itens onde a IA teve baixa confiança, permitindo que o operador: Confirme ou corrija a classificação sugerida, altere o nome do produto (normalized_name) e use sugestões de similaridade da IA para agilizar o processo.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+🛠️ Tecnologias Usadas
 
-## How can I edit this code?
+Este projeto Front-End foi desenvolvido com foco em performance e robustez, utilizando uma pilha moderna e tipada. A estrutura de aplicação e o roteamento são gerenciados pelo Next.js (App Router). O React é a biblioteca principal para a construção dos componentes da interface do usuário (UI), como as colunas e o editor. Para garantir a segurança e a tipagem estrita de dados críticos (como IDs e payloads), utilizamos o TypeScript. Por fim, o Tailwind CSS é empregado para a estilização rápida e flexível do layout de 3 colunas.
 
-There are several ways of editing your application.
+Atenção: A regra de negócio principal (Imutabilidade do ID, Concorrência e Persistência) é delegada e garantida pelas Stored Functions no Backend/DB.
 
-**Use Lovable**
+<img width="1919" height="909" alt="image" src="https://github.com/user-attachments/assets/30487c10-4ccd-4f6a-9c6c-7358e845c15c" />
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+<img width="1320" height="771" alt="image" src="https://github.com/user-attachments/assets/f12d5697-6de0-4a8f-8829-43ef86fa6693" />

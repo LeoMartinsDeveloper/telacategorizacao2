@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { QueueItem, Suggestion, Category, Subcategory } from '@/types/cockpit';
+import { QueueItem, StagingItem, Category, Subcategory } from '@/types/cockpit';
 import {
   fetchQueue,
-  fetchSuggestions,
   fetchCategories,
   fetchSubcategories,
-  processItem,
+  processBatch,
   DuplicityError,
 } from '@/services/cockpitApi';
 
@@ -21,9 +20,18 @@ interface UseCockpitDataReturn {
   selectItem: (item: QueueItem) => void;
   clearSelection: () => void;
 
-  // Suggestions state
-  suggestions: Suggestion[];
-  isLoadingSuggestions: boolean;
+  // Batch selection state (Queue)
+  selectedBatchIds: string[];
+  toggleBatchSelection: (id: string) => void;
+  selectAllBatch: () => void;
+  clearBatchSelection: () => void;
+
+  // Staging area state
+  stagingArea: StagingItem[];
+  addToStaging: (data: { name: string; categoryId: string; subcategoryId: string }) => void;
+  revertFromStaging: (item: StagingItem) => void;
+  commitBatch: () => Promise<{ success: boolean; error?: string; count?: number }>;
+  isCommitting: boolean;
 
   // Categories state
   categories: Category[];
@@ -31,9 +39,7 @@ interface UseCockpitDataReturn {
   isLoadingCategories: boolean;
 
   // Actions
-  saveItem: (data: { name: string; categoryId: string; subcategoryId: string }) => Promise<{ success: boolean; error?: string }>;
   skipItem: () => void;
-  isSaving: boolean;
 }
 
 export function useCockpitData(): UseCockpitDataReturn {
@@ -45,17 +51,17 @@ export function useCockpitData(): UseCockpitDataReturn {
   // Selected item state
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
 
-  // Suggestions state
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  // Batch selection state (Queue)
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
+
+  // Staging area state
+  const [stagingArea, setStagingArea] = useState<StagingItem[]>([]);
+  const [isCommitting, setIsCommitting] = useState(false);
 
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-
-  // Action state
-  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch queue on mount
   const loadQueue = useCallback(async () => {
@@ -64,6 +70,11 @@ export function useCockpitData(): UseCockpitDataReturn {
     try {
       const data = await fetchQueue();
       setQueue(data);
+      setSelectedBatchIds([]);
+      // Auto-select first item
+      if (data.length > 0) {
+        setSelectedItem(data[0]);
+      }
     } catch (error) {
       setQueueError('Erro ao carregar a fila. Tente novamente.');
       console.error('Failed to fetch queue:', error);
@@ -95,69 +106,114 @@ export function useCockpitData(): UseCockpitDataReturn {
     loadCategories();
   }, [loadQueue, loadCategories]);
 
-  // Select item and load suggestions
-  const selectItem = useCallback(async (item: QueueItem) => {
+  // Select item
+  const selectItem = useCallback((item: QueueItem) => {
     setSelectedItem(item);
-    setSuggestions([]);
-    setIsLoadingSuggestions(true);
-
-    try {
-      const data = await fetchSuggestions(item.id);
-      setSuggestions(data);
-    } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
   }, []);
 
   const clearSelection = useCallback(() => {
     setSelectedItem(null);
-    setSuggestions([]);
   }, []);
 
-  // Save item with optimistic update
-  const saveItem = useCallback(async (data: { name: string; categoryId: string; subcategoryId: string }) => {
+  const toggleBatchSelection = useCallback((id: string) => {
+    setSelectedBatchIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }, []);
+
+  const clearBatchSelection = useCallback(() => {
+    setSelectedBatchIds([]);
+  }, []);
+
+  const selectAllBatch = useCallback(() => {
+    setSelectedBatchIds(queue.map((i) => i.id));
+  }, [queue]);
+
+  // Add item to staging (move from queue to staging)
+  const addToStaging = useCallback((data: { name: string; categoryId: string; subcategoryId: string }) => {
+    if (!selectedItem) return;
+
+    const category = categories.find(c => c.id === data.categoryId);
+    const subcategory = subcategories.find(s => s.id === data.subcategoryId);
+
+    const stagingItem: StagingItem = {
+      ...selectedItem,
+      staged_name: data.name,
+      staged_category_id: data.categoryId,
+      staged_category_name: category?.name || '',
+      staged_subcategory_id: data.subcategoryId,
+      staged_subcategory_name: subcategory?.name || '',
+    };
+
+    // Add to staging
+    setStagingArea(prev => [...prev, stagingItem]);
+
+    // Remove from queue (optimistic)
+    const currentIndex = queue.findIndex(item => item.id === selectedItem.id);
+    const newQueue = queue.filter(item => item.id !== selectedItem.id);
+    setQueue(newQueue);
+    setSelectedBatchIds((prev) => prev.filter((id) => id !== selectedItem.id));
+
+    // Move to next item
+    const nextItem = newQueue[currentIndex] || newQueue[0] || null;
+    setSelectedItem(nextItem);
+  }, [selectedItem, queue, categories, subcategories]);
+
+  // Revert item from staging back to queue
+  const revertFromStaging = useCallback((item: StagingItem) => {
+    // Remove staged fields and add back to queue
+    const { staged_name, staged_category_id, staged_category_name, staged_subcategory_id, staged_subcategory_name, ...queueItem } = item;
+    
+    // Add back to queue
+    setQueue(prev => [...prev, queueItem as QueueItem]);
+
+    // Remove from staging
+    setStagingArea(prev => prev.filter(i => i.id !== item.id));
+
+    // If no item selected, select the reverted item
     if (!selectedItem) {
-      return { success: false, error: 'Nenhum item selecionado.' };
+      setSelectedItem(queueItem as QueueItem);
+    }
+  }, [selectedItem]);
+
+  // Commit batch to API
+  const commitBatch = useCallback(async () => {
+    if (stagingArea.length === 0) {
+      return { success: false, error: 'Nenhum item no carrinho.' };
     }
 
-    setIsSaving(true);
+    setIsCommitting(true);
 
     try {
-      await processItem({
-        id: selectedItem.id, // Preserve original ID - never generate new
-        name: data.name,
-        category_id: data.categoryId,
-        subcategory_id: data.subcategoryId,
-      });
+      const payload = {
+        items: stagingArea.map(item => ({
+          id: item.id,
+          name: item.staged_name,
+          category_id: item.staged_category_id,
+          subcategory_id: item.staged_subcategory_id,
+        })),
+      };
 
-      // Optimistic update - remove from queue
-      const currentIndex = queue.findIndex(item => item.id === selectedItem.id);
-      const newQueue = queue.filter(item => item.id !== selectedItem.id);
-      setQueue(newQueue);
+      await processBatch(payload);
 
-      // Move to next item
-      const nextItem = newQueue[currentIndex] || newQueue[0] || null;
-      if (nextItem) {
-        selectItem(nextItem);
-      } else {
-        clearSelection();
-      }
+      const count = stagingArea.length;
+      
+      // Clear staging area on success
+      setStagingArea([]);
 
-      return { success: true };
+      return { success: true, count };
     } catch (error) {
       if (error instanceof DuplicityError) {
         return { 
           success: false, 
-          error: 'Este nome já existe no cadastro deste cliente. Por favor, verifique ou use outro nome.' 
+          error: 'Alguns itens possuem nomes duplicados. Verifique e tente novamente.' 
         };
       }
-      return { success: false, error: 'Erro ao salvar. Tente novamente.' };
+      return { success: false, error: 'Erro ao enviar lote. Tente novamente.' };
     } finally {
-      setIsSaving(false);
+      setIsCommitting(false);
     }
-  }, [selectedItem, queue, selectItem, clearSelection]);
+  }, [stagingArea]);
 
   // Skip to next item without saving
   const skipItem = useCallback(() => {
@@ -167,9 +223,9 @@ export function useCockpitData(): UseCockpitDataReturn {
     const nextIndex = (currentIndex + 1) % queue.length;
 
     if (queue.length > 1 || nextIndex !== currentIndex) {
-      selectItem(queue[nextIndex]);
+      setSelectedItem(queue[nextIndex]);
     }
-  }, [selectedItem, queue, selectItem]);
+  }, [selectedItem, queue]);
 
   return {
     queue,
@@ -179,13 +235,18 @@ export function useCockpitData(): UseCockpitDataReturn {
     selectedItem,
     selectItem,
     clearSelection,
-    suggestions,
-    isLoadingSuggestions,
+    selectedBatchIds,
+    toggleBatchSelection,
+    selectAllBatch,
+    clearBatchSelection,
+    stagingArea,
+    addToStaging,
+    revertFromStaging,
+    commitBatch,
+    isCommitting,
     categories,
     subcategories,
     isLoadingCategories,
-    saveItem,
     skipItem,
-    isSaving,
   };
 }

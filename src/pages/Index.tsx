@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { QueueList } from '@/components/cockpit/QueueList';
 import { ItemEditor } from '@/components/cockpit/ItemEditor';
-import { SuggestionList } from '@/components/cockpit/SuggestionList';
+import { StagingPanel } from '@/components/cockpit/StagingPanel';
 import { useCockpitData } from '@/hooks/useCockpitData';
-import { Suggestion } from '@/types/cockpit';
+import { StagingItem } from '@/types/cockpit';
 import { useToast } from '@/hooks/use-toast';
 import { Cpu, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,53 +17,61 @@ const Index = () => {
     refetchQueue,
     selectedItem,
     selectItem,
-    suggestions,
-    isLoadingSuggestions,
+    selectedBatchIds,
+    toggleBatchSelection,
+    selectAllBatch,
+    clearBatchSelection,
+    stagingArea,
+    addToStaging,
+    revertFromStaging,
+    commitBatch,
+    isCommitting,
     categories,
     subcategories,
-    saveItem,
     skipItem,
-    isSaving,
   } = useCockpitData();
-
-  const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null);
 
   const handleSelectItem = useCallback((item: typeof selectedItem) => {
     if (item) {
       selectItem(item);
-      setSelectedSuggestion(null);
     }
   }, [selectItem]);
 
-  const handleSelectSuggestion = useCallback((suggestion: Suggestion) => {
-    setSelectedSuggestion(suggestion);
+  const handleSave = useCallback((data: { name: string; categoryId: string; subcategoryId: string }) => {
+    addToStaging(data);
     toast({
-      title: "Sugestão aplicada",
-      description: `Categoria e subcategoria preenchidas automaticamente.`,
+      title: "Item adicionado ao carrinho",
+      description: `"${data.name}" está pronto para envio.`,
     });
-  }, [toast]);
+  }, [addToStaging, toast]);
 
-  const handleSave = useCallback(async (data: { name: string; categoryId: string; subcategoryId: string }) => {
-    const result = await saveItem(data);
+  const handleRevert = useCallback((item: StagingItem) => {
+    revertFromStaging(item);
+    toast({
+      title: "Item devolvido à fila",
+      description: `"${item.staged_name}" voltou para a fila de pendentes.`,
+    });
+  }, [revertFromStaging, toast]);
+
+  const handleCommit = useCallback(async () => {
+    const result = await commitBatch();
 
     if (result.success) {
-      setSelectedSuggestion(null);
       toast({
-        title: "Item salvo com sucesso",
-        description: `"${data.name}" foi classificado e movido para o Baseline.`,
+        title: "Lote enviado com sucesso",
+        description: `${result.count} itens foram salvos no Baseline.`,
       });
     } else {
       toast({
         variant: "destructive",
-        title: "Erro ao salvar",
+        title: "Erro ao enviar lote",
         description: result.error,
       });
     }
-  }, [saveItem, toast]);
+  }, [commitBatch, toast]);
 
   const handleSkip = useCallback(() => {
     skipItem();
-    setSelectedSuggestion(null);
     toast({
       title: "Item pulado",
       description: "Avançando para o próximo item da fila.",
@@ -125,10 +133,15 @@ const Index = () => {
               </Button>
             </div>
           ) : (
+            
             <QueueList
               items={queue}
               selectedId={selectedItem?.id || null}
+              selectedBatchIds={selectedBatchIds}
               onSelect={handleSelectItem}
+              onToggleBatch={toggleBatchSelection}
+              onSelectAll={selectAllBatch}
+              onClearBatch={clearBatchSelection}
             />
           )}
         </aside>
@@ -139,21 +152,18 @@ const Index = () => {
             item={selectedItem}
             categories={categories}
             subcategories={subcategories}
-            selectedSuggestion={selectedSuggestion}
             onSave={handleSave}
             onSkip={handleSkip}
-            isSaving={isSaving}
           />
         </section>
 
-        {/* Column 3: Suggestions */}
+        {/* Column 3: Staging Panel */}
         <aside className="w-80 border-l border-border bg-card overflow-hidden shrink-0">
-          <SuggestionList
-            suggestions={suggestions}
-            selectedId={selectedSuggestion?.id || null}
-            onSelect={handleSelectSuggestion}
-            isLoading={isLoadingSuggestions}
-            hasItem={!!selectedItem}
+          <StagingPanel
+            items={stagingArea}
+            onRevert={handleRevert}
+            onCommit={handleCommit}
+            isCommitting={isCommitting}
           />
         </aside>
       </main>

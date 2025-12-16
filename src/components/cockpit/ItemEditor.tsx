@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { QueueItem, Category, Subcategory, Suggestion } from '@/types/cockpit';
+import { QueueItem, Category, Subcategory } from '@/types/cockpit';
 import { ConfidenceBadge } from './ConfidenceBadge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,20 +17,18 @@ interface ItemEditorProps {
   item: QueueItem | null;
   categories: Category[];
   subcategories: Subcategory[];
-  selectedSuggestion: Suggestion | null;
   onSave: (data: { name: string; categoryId: string; subcategoryId: string }) => void;
   onSkip: () => void;
-  isSaving: boolean;
+  isSaving?: boolean;
 }
 
 export function ItemEditor({
   item,
   categories,
   subcategories,
-  selectedSuggestion,
   onSave,
   onSkip,
-  isSaving,
+  isSaving = false,
 }: ItemEditorProps) {
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -43,13 +41,6 @@ export function ItemEditor({
       setSubcategoryId(item.subcategory_id || '');
     }
   }, [item]);
-
-  useEffect(() => {
-    if (selectedSuggestion) {
-      setCategoryId(selectedSuggestion.category_id);
-      setSubcategoryId(selectedSuggestion.subcategory_id);
-    }
-  }, [selectedSuggestion]);
 
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.category_id === categoryId
@@ -66,6 +57,7 @@ export function ItemEditor({
 
   const canSave = name.trim() && categoryId && subcategoryId;
 
+  // No item selected
   if (!item) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -205,7 +197,7 @@ export function ItemEditor({
             disabled={!canSave || isSaving}
           >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Salvando...' : 'Salvar'}
+            {isSaving ? 'Salvando...' : 'Adicionar ao Carrinho'}
           </Button>
         </div>
       </div>
