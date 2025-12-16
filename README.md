@@ -8,6 +8,8 @@ Este projeto Front-End foi desenvolvido com foco em performance e robustez, util
 
 Atenção: A regra de negócio principal (Imutabilidade do ID, Concorrência e Persistência) é delegada e garantida pelas Stored Functions no Backend/DB.
 
-<img width="1919" height="909" alt="image" src="https://github.com/user-attachments/assets/30487c10-4ccd-4f6a-9c6c-7358e845c15c" />
+<img width="1919" height="904" alt="image" src="https://github.com/user-attachments/assets/4ffe6fdd-0e12-4e7e-a9ab-aca65202be1d" />
 
-<img width="1320" height="771" alt="image" src="https://github.com/user-attachments/assets/f12d5697-6de0-4a8f-8829-43ef86fa6693" />
+
+<img width="1918" height="897" alt="image" src="https://github.com/user-attachments/assets/a9afb467-4ecd-4870-8833-204f87d036ee" />
+
