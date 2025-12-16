@@ -102,16 +102,11 @@ export function QueueList({
               >
                 <div className="flex items-start gap-3">
                   {/* Checkbox */}
-                  <div 
-                    className="pt-0.5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleBatch(item.id);
-                    }}
-                  >
+                  <div className="pt-0.5">
                     <Checkbox 
                       checked={isInBatch}
-                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      onCheckedChange={() => onToggleBatch(item.id)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer"
                     />
                   </div>
                   
