@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { StagingItem } from '@/types/cockpit';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingCart, Undo2, Send, Package, Loader2 } from 'lucide-react';
 
 interface StagingPanelProps {
@@ -11,6 +13,34 @@ interface StagingPanelProps {
 }
 
 export function StagingPanel({ items, onRevert, onCommit, isCommitting }: StagingPanelProps) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map(item => item.id)));
+    }
+  };
+
+  const handleRevertSelected = () => {
+    const itemsToRevert = items.filter(item => selectedIds.has(item.id));
+    itemsToRevert.forEach(item => onRevert(item));
+    setSelectedIds(new Set());
+  };
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col h-full">
@@ -34,6 +64,9 @@ export function StagingPanel({ items, onRevert, onCommit, isCommitting }: Stagin
     );
   }
 
+  const allSelected = selectedIds.size === items.length;
+  const someSelected = selectedIds.size > 0;
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b border-border">
@@ -46,6 +79,31 @@ export function StagingPanel({ items, onRevert, onCommit, isCommitting }: Stagin
             {items.length} {items.length === 1 ? 'item' : 'itens'}
           </span>
         </div>
+        
+        {/* Select All + Revert Selected */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={allSelected}
+              onCheckedChange={toggleSelectAll}
+              className="cursor-pointer"
+            />
+            <span className="text-xs text-muted-foreground">
+              {someSelected ? `${selectedIds.size} selecionado(s)` : 'Selecionar todos'}
+            </span>
+          </div>
+          {someSelected && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRevertSelected}
+              className="h-7 text-xs gap-1"
+            >
+              <Undo2 className="h-3 w-3" />
+              Voltar ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
@@ -55,34 +113,43 @@ export function StagingPanel({ items, onRevert, onCommit, isCommitting }: Stagin
               key={item.id}
               className="group p-3 rounded-lg border border-border bg-card hover:border-primary/30 transition-all"
             >
-              <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  checked={selectedIds.has(item.id)}
+                  onCheckedChange={() => toggleSelection(item.id)}
+                  className="cursor-pointer mt-0.5"
+                />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {item.staged_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Original: {item.original_name}
-                  </p>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {item.staged_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        Original: {item.original_name}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      onClick={() => onRevert(item)}
+                      title="Voltar para a fila"
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground truncate">
+                      {item.staged_category_name}
+                    </span>
+                    <span className="text-muted-foreground">→</span>
+                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary truncate">
+                      {item.staged_subcategory_name}
+                    </span>
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  onClick={() => onRevert(item)}
-                  title="Voltar para a fila"
-                >
-                  <Undo2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              
-              <div className="flex items-center gap-2 text-xs">
-                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground truncate">
-                  {item.staged_category_name}
-                </span>
-                <span className="text-muted-foreground">→</span>
-                <span className="px-2 py-0.5 rounded bg-primary/10 text-primary truncate">
-                  {item.staged_subcategory_name}
-                </span>
               </div>
             </div>
           ))}
